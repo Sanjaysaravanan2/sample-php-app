@@ -1,0 +1,63 @@
+pipeline {
+    agent any
+
+    stages {
+        stage('Clone Repository') {
+            steps {
+                git 'https://github.com/your-repo/sample-php-app.git'
+            }
+        }
+        stage('Build Docker Image') {
+            steps {
+                script {
+                    dockerImage = docker.build("sample-php-app:\${env.BUILD_ID}")
+                }
+            }
+        }
+        stage('Deploy to Dev') {
+            steps {
+                script {
+                    ansiblePlaybook(
+                        playbook: 'ansible/playbook.yml',
+                        inventory: 'ansible/inventory',
+                        extraVars: [
+                            env: 'dev',
+                            image: dockerImage.id
+                        ]
+                    )
+                }
+            }
+        }
+        stage('Deploy to Staging') {
+            steps {
+                input "Deploy to Staging?"
+                script {
+                    ansiblePlaybook(
+                        playbook: 'ansible/playbook.yml',
+                        inventory: 'ansible/inventory',
+                        extraVars: [
+                            env: 'stage',
+                            image: dockerImage.id
+                        ]
+                    )
+                }
+            }
+        }
+        stage('Deploy to Production') {
+            steps {
+                input "Deploy to Production?"
+                script {
+                    ansiblePlaybook(
+                        playbook: 'ansible/playbook.yml',
+                        inventory: 'ansible/inventory',
+                        extraVars: [
+                            env: 'prod',
+                            image: dockerImage.id
+                        ]
+                    )
+                }
+            }
+        }
+    }
+}
+
