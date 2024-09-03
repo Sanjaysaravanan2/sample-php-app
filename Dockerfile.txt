@@ -8,3 +8,5 @@ COPY index.php /var/www/html/
 # Expose port 80
 EXPOSE 80
 EOF
+
+
